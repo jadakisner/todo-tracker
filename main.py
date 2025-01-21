@@ -19,9 +19,11 @@ def index():
 
     task_list = [
         Div(
-            H3(task[1]),
-            P(task[2]),
-            P(f"Due: {task[4] if task[4] else 'No due date'}"),
+            H3(task[1]),  # Title
+            P(task[2]),   # Body
+            P(f"Due: {task[4] if task[4] else 'No due date'}"),  # Due date
+            P(f"Tags: {task[6] if task[6] else 'No tags'}"),  # Tags
+            P(f"Status: {'Completed' if task[5] else 'Not Completed'}"),  # Completion status
             Button(
                 "Mark Complete" if not task[5] else "Mark Incomplete",
                 hx_post=f"/toggle/{task[0]}"
@@ -39,7 +41,7 @@ def index():
 
 # Add task route
 @rt('/add', methods=["GET", "POST"])
-def add_task(title=None, body=None, due_date=None):
+def add_task(title=None, body=None, due_date=None, tags=None):
     if title:  # POST request
         # Basic validation to ensure title and body are not empty
         if not title or not body:
@@ -52,8 +54,8 @@ def add_task(title=None, body=None, due_date=None):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "INSERT INTO tasks (title, body, creation_time, due_date) VALUES (?, ?, ?, ?)",
-                (title, body, datetime.now().isoformat(), due_date),
+                "INSERT INTO tasks (title, body, creation_time, due_date, tags) VALUES (?, ?, ?, ?, ?)",
+                (title, body, datetime.now().isoformat(), due_date, tags),
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -70,10 +72,11 @@ def add_task(title=None, body=None, due_date=None):
             H1("Add a New Task"),
             Form(
                 Input(name="title", placeholder="Title", required=True),
-                # Label for textarea and using the Textarea element correctly
                 P("Details"),
                 Textarea(name="body", placeholder="Enter task details here"),
                 Input(name="due_date", type="date"),
+                P("Tags (comma-separated)"),
+                Input(name="tags", placeholder="e.g. work, personal"),
                 Button("Add Task", type="submit"),
                 method="post",
             ),
